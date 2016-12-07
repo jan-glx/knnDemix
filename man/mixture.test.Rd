@@ -5,7 +5,7 @@
 \title{mixture.test}
 \usage{
 mixture.test(X0, Xm, alpha = 1, alternative = "lower", conf.level = 0.95,
-  k = 1, calc.CI = TRUE)
+  k = 1, sub_sample = 1/4, seed_ = 1, calc.CI = TRUE)
 }
 \arguments{
 \item{X0}{numeric matrix with rows beeing data points from a sample from \eqn{F_0}. Vector inputs are coerced to nx1 matrices.}
@@ -19,6 +19,10 @@ mixture.test(X0, Xm, alpha = 1, alternative = "lower", conf.level = 0.95,
 \item{conf.level}{confidence level of the interval.}
 
 \item{k}{integer value indicating the which nearest neighbour is used for the testing density ratios.}
+
+\item{sub_sample}{numeric value specifing factor subsamplamping -- only n*sub_sample_exp of all n pvalues will be used in order to reduce their depency}
+
+\item{seed_}{seed to be used for subsampling. Set to \code{NULL} if want reduce variance by averaging several subsamplings.}
 
 \item{calc.CI}{logical value indicating if confidence intervals for alpha schould be computed.
 Can be turend of to save computation time in case it is not needed.}

@@ -11,6 +11,8 @@
 #' @param alternative a character string specifying the alternative hypothesis - only 'lower' is allowed and only lower makes sense
 #' @param conf.level confidence level of the interval.
 #' @param k integer value indicating the which nearest neighbour is used for the testing density ratios.
+#' @param sub_sample numeric value specifing factor subsamplamping -- only n*sub_sample_exp of all n pvalues will be used in order to reduce their depency
+#' @param seed_ seed to be used for subsampling. Set to \code{NULL} if want reduce variance by averaging several subsamplings.
 #' @param calc.CI logical value indicating if confidence intervals for alpha schould be computed.
 #' Can be turend of to save computation time in case it is not needed.
 #' @examples
@@ -25,12 +27,14 @@
 #' mixture.test(X0, Xm, alpha=1, calc.CI=FALSE)$p.value #should be significant
 #' mixture.test(X0, Xm) # computes confidence intervals
 #' @export
-mixture.test <- function(X0, Xm, alpha = 1, alternative = "lower", conf.level = 0.95, k = 1, calc.CI=TRUE) {
+mixture.test <- function(X0, Xm, alpha = 1, alternative = "lower", conf.level = 0.95, k = 1, sub_sample = 1/4, seed_ = 1, calc.CI=TRUE) {
   alternative <- match.arg(alternative)
   if (!missing(alpha) && (length(alpha) != 1 || !is.finite(alpha) || alpha < 0 || alpha > 1))
     stop("'alpha' must be a single number between 0 and 1")
   if (!missing(conf.level) && (length(conf.level) != 1 || !is.finite(conf.level) || conf.level < 0 || conf.level > 1))
     stop("'conf.level' must be a single number between 0 and 1")
+  if (!missing(sub_sample) && (length(sub_sample) != 1 || !is.finite(sub_sample) || sub_sample < 0 || sub_sample > 1))
+    stop("'sub_sample_exp' must be a single number between 0 and 1")
   dname <- paste(deparse(substitute(X0)), "and", deparse(substitute(Xm)))
   x0 <- as.matrix(X0)
   xm <- as.matrix(Xm)
@@ -40,18 +44,23 @@ mixture.test <- function(X0, Xm, alpha = 1, alternative = "lower", conf.level = 
   if (ncol(Xm)!=p)
     stop("X0 and Xm must have the same dimesions")
 
-  dnn0 <- FNN::knn.dist(X0,k)[,k]
-  dnnm <- FNN::knnx.dist(Xm,X0,k)[,k]
+  n <- ceiling(n0*sub_sample)
+  if (!exists(".Random.seed")) set.seed(NULL)
+  old_seed <- .Random.seed
+  set.seed(seed_)
+  ss <- sample(seq_len(n0), n) # subsampling bc. p.vals are not independent
+  .Random.seed <- old_seed
+
+  dnn0 <- FNN::knn.dist(X0,k)[ss,k]
+  dnnm <- FNN::knnx.dist(Xm,X0[ss,],k)[,k]
 
   r <- (k/(dnnm^p*nm))/(k/(dnn0^p*(n0-1)))
   p.vals <- extraDistr::pbetapr(alpha/r,k,k,lower.tail = FALSE) # == 1-1/(r/alpha+1) for k=1
   S <- -2*sum(log(p.vals))
 
-  pval <- pchisq(S, lower.tail = FALSE, df = 2*length(p.vals))
+  pval <- pchisq(S, lower.tail = FALSE, df = 2*n)
 
-  n<-length(r)
-
-  S_upper <- qchisq(conf.level, df=2*length(p.vals))
+  S_upper <- qchisq(conf.level, df=2*n)
   cint <-  if (!calc.CI) c(0,1) else c(0,  pmax(optimize(function(alpha) {
     p.vals <- extraDistr::pbetapr(alpha/r,k,k,lower.tail = FALSE)
     S <- -2*sum(log(p.vals))
@@ -59,7 +68,7 @@ mixture.test <- function(X0, Xm, alpha = 1, alternative = "lower", conf.level = 
   },c(0,1))$minimum,0) ) #there should be a smarter way...
   attr(cint, "conf.level") <- conf.level
 
-  S_med <- qchisq(0.5, df=2*length(p.vals))
+  S_med <- qchisq(0.5, df=2*n)
   estimate <- if (!calc.CI) 0 else min(1, pmax(optimize(function(alpha) {
     p.vals <- extraDistr::pbetapr(alpha/r,k,k,lower.tail = FALSE)
     S <- -2*sum(log(p.vals))
