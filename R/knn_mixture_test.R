@@ -44,26 +44,22 @@ mixture.test <- function(X0, Xm, alpha = 1, alternative = "lower", conf.level = 
   dnnm <- FNN::knnx.dist(Xm,X0,k)[,k]
 
   r <- (k/(dnnm^p*nm))/(k/(dnn0^p*(n0-1)))
-  p.vals <- extraDistr::pbetapr(alpha/r,k,k,lower.tail = FALSE) #1-1/(r/alpha+1)#1-pbetapr(alpha/r,k,k)
+  p.vals <- extraDistr::pbetapr(alpha/r,k,k,lower.tail = FALSE) # == 1-1/(r/alpha+1) for k=1
   S <- -2*sum(log(p.vals))
-  pval <- pchisq(S, lower.tail = FALSE, df = 2*nm)
+
+  pval <- pchisq(S, lower.tail = FALSE, df = 2*length(p.vals))
 
   n<-length(r)
 
-
-  #pchisq(S, lower.tail = FALSE, df = 2*nm) <= (1-conf.level)
-  #S <= qchisq((1-conf.level), lower.tail = FALSE, df = 2*nm)
-  #-2*sum(log(p.vals))
-  S_upper <- qchisq(conf.level, df=2*nm)
+  S_upper <- qchisq(conf.level, df=2*length(p.vals))
   cint <-  if (!calc.CI) c(0,1) else c(0,  pmax(optimize(function(alpha) {
     p.vals <- extraDistr::pbetapr(alpha/r,k,k,lower.tail = FALSE)
     S <- -2*sum(log(p.vals))
-    pval <- pchisq(S, lower.tail = FALSE, df = 2*nm)
     abs(S-S_upper)
   },c(0,1))$minimum,0) ) #there should be a smarter way...
   attr(cint, "conf.level") <- conf.level
 
-  S_med <- qchisq(0.5, df=2*nm)
+  S_med <- qchisq(0.5, df=2*length(p.vals))
   estimate <- if (!calc.CI) 0 else min(1, pmax(optimize(function(alpha) {
     p.vals <- extraDistr::pbetapr(alpha/r,k,k,lower.tail = FALSE)
     S <- -2*sum(log(p.vals))
