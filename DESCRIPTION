@@ -1,0 +1,14 @@
+Package: knnDemix
+Type: Package
+Title: Bound for mixing coefficient from two samples
+Version: 0.0.1
+Date: 2016-12-07
+Author: Jan Gleixner
+Maintainer: Jan Gleixner <jan.gleixner@gmail.com>
+Description: Determines the maximal fraction of F0 in a mixture of F0 and
+    something else from a sample from F0 and one sample from the mixture - using a
+    knn statistic.
+License: MIT + file LICENSE
+Imports: FNN, extraDistr
+RoxygenNote: 5.0.1
+Suggests: testthat
