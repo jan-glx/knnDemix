@@ -6,3 +6,9 @@ Then the sum of log p-values obtained by testing for $\hat{f}_0 \geq \alpha \hat
 
 This package provides a implementation of a corresponding hypothesis test for $\alpha$. Works. Needs proof.
 For example this might be applied to determine the knockout rate from fluorescence cytometry measurement of a biological sample given additionally only measurements from a negative control sample.
+
+### Installation
+```r
+# install.packages("remotes")
+remotes::install_github("jan-glx/knnDemix")
+```
